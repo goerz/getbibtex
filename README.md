@@ -1,8 +1,6 @@
 # getbibtex
 
 [![Source code on Github](https://img.shields.io/badge/goerz-getbibtex-blue.svg?logo=github)][Github]
-[![Tests](https://github.com/goerz/getbibtex/workflows/Tests/badge.svg?branch=master)](https://github.com/goerz/getbibtex/actions?query=workflow%3ATests)
-[![Coverage](https://codecov.io/gh/goerz/getbibtex/branch/master/graph/badge.svg)](https://codecov.io/gh/goerz/getbibtex)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 A script for getting a BibTeX entry from a URL, DOI, or arXiv ID.
