@@ -24,14 +24,16 @@ except OSError:
     HISTORY = ''
 
 # requirements for use
-requirements = []
+requirements = [
+    'click',
+    'habanero',
+]
 
 # requirements for development (testing, generating docs)
 dev_requirements = [
-    'better-apidoc',
+    'black',
     'coverage',
     'coveralls',
-    'doctr-versions-menu',
     'flake8',
     'gitpython',
     'isort',
@@ -42,33 +44,15 @@ dev_requirements = [
     'pytest',
     'pytest-cov',
     'pytest-xdist',
-    'm2r',
-    'recommonmark',
-    'sphinx',
-    'sphinx-autobuild',
-    'sphinx-copybutton',
-    'sphinx-autodoc-typehints',
-    'sphinx_rtd_theme',
     'twine',
     'wheel',
 ]
-if sys.version_info >= (3, 6):
-    dev_requirements.append('black')
 
 VERSION = get_version('./src/getbibtex/__init__.py')
 
 setup(
     author="Michael Goerz",
     author_email='mail@michaelgoerz.net',
-    classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Natural Language :: English',
-    ],
     description=(
         "A script for getting a BibTeX entry from a URL, DOI, or arXiv ID"
     ),
@@ -83,6 +67,10 @@ setup(
     name='getbibtex',
     packages=find_packages(where="src"),
     package_dir={"": "src"},
+    entry_points='''
+        [console_scripts]
+        getbibtex=getbibtex:main
+    ''',
     url='https://github.com/goerz/getbibtex',
     version=VERSION,
     zip_safe=False,
