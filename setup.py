@@ -25,8 +25,11 @@ except OSError:
 
 # requirements for use
 requirements = [
+    'arxiv2bib',
+    'bibtexparser',
     'click',
     'habanero',
+    'unidecode',
 ]
 
 # requirements for development (testing, generating docs)

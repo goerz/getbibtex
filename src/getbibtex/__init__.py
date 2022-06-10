@@ -5,6 +5,7 @@ import sys
 
 import click
 
+from .backends.arxiv import get_bibtex_from_arxiv_id
 from .backends.crossref import get_bibtex_from_doi, get_bibtex_from_query
 
 
@@ -12,6 +13,42 @@ __version__ = '0.1.0-dev'
 
 
 RX_DOI = re.compile(r'10.\d{4,9}/[-._;()/:A-Z0-9]+', re.I)
+
+RX_ARXIV_NEW = re.compile(r'arxiv.*?(\d{4}\.\d{4,}(v\d+)?)', re.I)
+RX_ARXIV_OLD = re.compile(
+    r"""
+    ((
+       math-ph
+      |hep-ph
+      |nucl-ex
+      |nucl-th
+      |gr-qc
+      |astro-ph
+      |hep-lat
+      |quant-ph
+      |hep-ex
+      |hep-th
+      |stat
+        (\.(AP|CO|ML|ME|TH))?
+      |q-bio
+        (\.(BM|CB|GN|MN|NC|OT|PE|QM|SC|TO))?
+      |cond-mat
+        (\.(dis-nn|mes-hall|mtrl-sci|other|soft|stat-mech|str-el|supr-con))?
+      |cs
+        (\.(AR|AI|CL|CC|CE|CG|GT|CV|CY|CR|DS|DB|DL|DM|DC|GL|GR|HC|IR|IT|LG|LO|
+          MS|MA|MM|NI|NE|NA|OS|OH|PF|PL|RO|SE|SD|SC))?
+      |nlin
+        (\.(AO|CG|CD|SI|PS))?
+      |physics
+        (\.(acc-ph|ao-ph|atom-ph|atm-clus|bio-ph|chem-ph|class-ph|comp-ph|
+          data-an|flu-dyn|gen-ph|geo-ph|hist-ph|ins-det|med-ph|optics|ed-ph|
+          soc-ph|plasm-ph|pop-ph|space-ph))?
+      |math
+          (\.(AG|AT|AP|CT|CA|CO|AC|CV|DG|DS|FA|GM|GN|GT|GR|HO|IT|KT|LO|MP|MG
+          |NT|NA|OA|OC|PR|QA|RT|RA|SP|ST|SG))?
+    )/\d{7}(v\d+)?)""",
+    re.X,
+)
 
 
 @click.command()
@@ -29,12 +66,16 @@ RX_DOI = re.compile(r'10.\d{4,9}/[-._;()/:A-Z0-9]+', re.I)
 )
 @click.option(
     '--auto-protect/--no-auto-protect',
-    default=True,
+    default=None,
     help=(
-        "With --auto-protect (default), assume that titles in the Crossref "
-        "record are in proper sentence case, so that any words with capitals "
+        "With --auto-protect, assume that titles returned by the backend "
+        "are in sentence case, so that any words with capitals "
         "can be assumed to be proper nouns that need to be protected "
-        "(enclosed in {})."
+        "(enclosed in {}). With --no-auto-protect, the titles are used as "
+        "they are returned by the backend, up ensuring that known proper "
+        "nouns are protected. "
+        "If neither option is given (default),  heuristics are applied "
+        "to determine which words need to be protected."
     ),
 )
 @click.option(
@@ -62,18 +103,23 @@ def main(
     use_journal_macros,
     args,
 ):
-    """Query the Crossref database and generate a BibTeX entry.
+    """Generate a BibTeX entry from the given query.
 
     Print a a sigle bibtex record to stdout, and any warnings/error messages to
     stderr.
 
-    The ARGS are combined into a single query string. This must be a DOI, a
-    string (e.g. URL) containing a DOI, or a free-form query. Any space in the
-    query string indicates a free-form query.
+    The ARGS are combined into a single query string. This must be a DOI, an
+    arXiv identifier, a string (e.g. URL) containing a DOI or arXiv identifier,
+    or a free-form query. Any space in the query string indicates a free-form
+    query.
     """
     query = " ".join(args)
     doi = None
     try:
+        is_doi = False
+        is_arxiv = False
+        if RX_ARXIV_NEW.search(query) or RX_ARXIV_OLD.search(query):
+            is_arxiv = True
         if ' ' in query:
             is_doi = False
         else:
@@ -86,7 +132,24 @@ def main(
                     doi = rx_match.group(0)
                 else:
                     is_doi = False
-        if is_doi:
+        if is_arxiv:
+            match = None
+            _rx = iter([RX_ARXIV_NEW, RX_ARXIV_OLD])
+            while bool(match) is False:
+                rx = next(_rx)
+                match = rx.search(query)
+            assert bool(match)
+            arxiv_id = match.group(1)
+            print(
+                get_bibtex_from_arxiv_id(
+                    arxiv_id,
+                    debug_record=debug_record,
+                    fix_uppercase=fix_uppercase,
+                    auto_protect=auto_protect,
+                    capitalize_field_names=capitalize_field_names,
+                )
+            )
+        elif is_doi:
             print(
                 get_bibtex_from_doi(
                     doi=doi,

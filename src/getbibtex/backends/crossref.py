@@ -117,7 +117,7 @@ def get_bibtex(
             possible (see `JOURNAL_MACRO_TO_NAME`)
     """
     try:
-        first_author = crossref_record['author'][0]['family'].title()
+        first_author = crossref_record['author'][0]['family'].capitalize()
     except (KeyError, IndexError):
         first_author = None
     author = get_names(crossref_record, 'author', fix_uppercase=fix_uppercase)
