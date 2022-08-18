@@ -42,13 +42,21 @@ Pull Requests that extend the macros of known journals, fix bugs, or extend the 
 
 ## Installation
 
-It is recommended that you have [pipx](https://pypa.github.io/pipx/) installed as a prerequisite. Then, to install the latest development version of getbibtex from [Github][], run
+It is recommended that you have [pipx](https://pypa.github.io/pipx/) installed as a prerequisite. Then, to install the latest development version of `getbibtex` from [Github][], run
 
 ```
 pipx install git+https://github.com/goerz/getbibtex.git
 ```
 
 This will make the `getbibtex` executable available on your system. Alternatively, you can also use simply `pip` instead of `pipx` if you want to do your own environment management.
+
+Assuming have installed `getbibtex` via `pipx`, run
+
+```
+pipx reinstall getbibtex
+```
+
+to upgrade to the latest `master` version.
 
 
 ## Usage
