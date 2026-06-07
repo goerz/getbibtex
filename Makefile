@@ -1,88 +1,87 @@
-.PHONY: help bootstrap clean clean-build clean-test clean-venv flake8-check pylint-check test test35 test36 test37 test38 test39 black-check black isort-check isort coverage dist dist-check
-	
+# Makefile for getbibtex development, built around uv.
+#
+# Run `make help` for an overview of the available targets.
+
+.PHONY: help develop test test-lowest coverage \
+        black black-check isort isort-check flake8 pylint lint \
+        devrepl shell upgrade clean distclean
+
 .DEFAULT_GOAL := help
 
-TOXOPTIONS ?=
-TOXINI ?= tox.ini
-TOX = tox -c $(TOXINI) $(TOXOPTIONS)
+# Python version for the development environment. Override on the command line,
+# e.g. `make PYTHON=3.11 test`. uv downloads the interpreter if it is missing.
+PYTHON ?= 3.12
 
-# empty TESTS delegates to TOXINI
-TESTS ?=
+# Dependency resolution strategy. Use `make RESOLUTION=lowest-direct test` to
+# verify the project against the lowest declared dependency versions.
+RESOLUTION ?= highest
 
-define PRINT_HELP_PYSCRIPT
-import re, sys
+# Each Python version gets its own environment so that switching PYTHON does not
+# force a re-sync. `make distclean` removes the whole .venv tree.
+export UV_PROJECT_ENVIRONMENT := .venv/py$(PYTHON)
 
-for line in sys.stdin:
-    match = re.match(r'^([a-z0-9A-Z_-]+):.*?## (.*)$$', line)
-    if match:
-        target, help = match.groups()
-        print("%-20s %s" % (target, help))
-endef
-export PRINT_HELP_PYSCRIPT
+# All development tooling lives in dependency groups (see pyproject.toml).
+# `uv run` transparently creates and syncs the environment before running, and
+# installs this project *editable*, so every target below picks up uncommitted
+# source changes immediately, with no rebuild or reinstall step.
+UV := uv run --python $(PYTHON) --resolution $(RESOLUTION) --all-groups
 
-help:  ## show this help
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+# Files checked by the test suite (modules and doctests in prose files).
+TESTS ?= src tests README.md CONTRIBUTING.md
 
-bootstrap: ## verify that tox is available and pre-commit hooks are active
-	python scripts/bootstrap.py
+# Locations passed to the linters and formatters.
+SOURCES ?= src tests
 
-clean: ## remove all build, test, and coverage artifacts, as well as tox environments
-	python scripts/clean.py all
+help:  ## Show this help
+	@grep -E '^([a-zA-Z0-9_-]+):.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "%-20s %s\n", $$1, $$2}'
 
-clean-build: ## remove build artifacts
-	python scripts/clean.py build
+develop:  ## Create or sync the development environment
+	uv sync --python $(PYTHON) --resolution $(RESOLUTION) --all-groups
 
-clean-tests: ## remove test and coverage artifacts
-	python scripts/clean.py tests
+test:  ## Run the test suite
+	$(UV) pytest -v --durations=10 -x -s $(TESTS)
 
-clean-venv: ## remove tox virtual environments
-	python scripts/clean.py venv
+test-lowest:  ## Run the test suite against the lowest declared dependency versions
+	$(MAKE) RESOLUTION=lowest-direct test
 
-flake8-check: bootstrap ## check style with flake8
-	$(TOX) -e run-flake8
-
-pylint-check: bootstrap ## check style with pylint
-	$(TOX) -e run-pylint
-
-
-test: bootstrap ## run tests for all supported Python versions
-	$(TOX) -e py38-test,py39-test -- $(TESTS)
-
-test35: bootstrap ## run tests for Python 3.5
-	$(TOX) -e py35-test -- $(TESTS)
-
-test36: bootstrap ## run tests for Python 3.6
-	$(TOX) -e py36-test -- $(TESTS)
-
-test37: bootstrap ## run tests for Python 3.7
-	$(TOX) -e py37-test -- $(TESTS)
-
-test38: bootstrap ## run tests for Python 3.8
-	$(TOX) -e py38-test -- $(TESTS)
-
-test39: bootstrap ## run tests for Python 3.9
-	$(TOX) -e py39-test -- $(TESTS)
-
-black-check: bootstrap ## Check all src and test files for complience to "black" code style
-	$(TOX) -e run-blackcheck
-
-black: bootstrap ## Apply 'black' code style to all src and test files
-	$(TOX) -e run-black
-
-isort-check: bootstrap ## Check all src and test files for correctly sorted imports
-	$(TOX) -e run-isortcheck
-
-isort: bootstrap ## Sort imports in all src and test files
-	$(TOX) -e run-isort
-
-coverage: test37  ## generate coverage report in ./htmlcov
-	$(TOX) -e coverage
+coverage:  ## Run tests with coverage; write HTML to ./htmlcov and coverage.xml
+	$(UV) pytest -v --cov=getbibtex \
+		--cov-report=term --cov-report=html --cov-report=xml $(TESTS)
 	@echo "open htmlcov/index.html"
 
-dist: bootstrap ## builds source and wheel package
-	$(TOX) -e run-cmd -- python setup.py sdist
-	$(TOX) -e run-cmd -- python setup.py bdist_wheel
-	ls -l dist
+black:  ## Reformat the code with black
+	$(UV) black $(SOURCES)
 
-dist-check: bootstrap ## Check all dist files for correctness
-	$(TOX) -e run-cmd -- twine check dist/*
+black-check:  ## Check code formatting with black
+	$(UV) black --check --diff $(SOURCES)
+
+isort:  ## Sort imports with isort
+	$(UV) isort $(SOURCES)
+
+isort-check:  ## Check import sorting with isort
+	$(UV) isort --check-only --diff $(SOURCES)
+
+flake8:  ## Check style with flake8
+	$(UV) flake8 $(SOURCES)
+
+pylint:  ## Check the code with pylint
+	$(UV) pylint -j 0 src
+
+lint: black-check isort-check flake8 pylint  ## Run all linters
+
+devrepl:  ## Launch an IPython REPL with the editable package and dev tools
+	$(UV) ipython
+
+shell:  ## Open a shell inside the development environment
+	$(UV) $$SHELL
+
+upgrade:  ## Upgrade locked dependency versions to the latest compatible release
+	uv lock --upgrade
+
+clean:  ## Remove build, test, and coverage artifacts
+	rm -rf build dist .eggs *.egg-info src/*.egg-info
+	rm -rf .pytest_cache .coverage coverage.xml htmlcov .mypy_cache .ruff_cache
+	find . -type d -name __pycache__ -exec rm -rf {} +
+
+distclean: clean  ## Remove all generated files, including the .venv environments
+	rm -rf .venv uv.lock .tox

@@ -8,7 +8,6 @@ from habanero import Crossref
 from ..bibtex import _Raw, bibtex_entry, get_citekey, protect_strings
 from ..journalnames import JOURNAL_NAME_TO_MACRO
 
-
 __all__ = ['get_bibtex_from_doi', 'get_bibtex_from_query']
 
 
@@ -32,9 +31,9 @@ def get_names(crossref_record, field, fix_uppercase=False):
 
 
 def get_journal(crossref_record, use_journal_macros=True):
-    """Extract journal from the Grossref record.
+    """Extract journal from the Crossref record.
 
-    If `use_journal_macros` is True, replace, return a macro name for the
+    If `use_journal_macros` is True, return a macro name for the
     journal if possible.
     """
     keys = ['short-container-title', 'container-title']

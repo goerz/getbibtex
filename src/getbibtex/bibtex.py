@@ -23,7 +23,7 @@ _PROTECTED_WORDS = [
 # We define some ascii versions of unicode author last names. These override
 # unidecode, which doesn't translate German umlauts, e.g. "ü" to "ue". This is
 # for good reason (since umlauts/diaeresis is also used in other languages that
-# don't use German transcription), we we define some German names with umlauts
+# don't use German transcription), so we define some German names with umlauts
 # as special cases
 NAME_UNICODE_MAP = {"Müller": "Mueller"}
 
@@ -97,7 +97,7 @@ def bibtex_entry(entrytype, citekey, *, capitalize_field_names=True, **kwargs):
         raise ValueError("Cannot generate bibtex for entrytype %r" % entrytype)
     lines = []
     lines.append('@%s{%s,' % (entrytype, citekey))
-    for (key, val) in kwargs.items():
+    for key, val in kwargs.items():
         if capitalize_field_names:
             key = key.title()  # capitalize first letter
         else:
@@ -153,6 +153,6 @@ def protect_strings(s, auto_protect=None):
                 re.X,
             )
             s = RX_PROPER_NOUNS.sub(r'{\1}', s)
-        for (rx, repl) in _PROTECTED_WORDS:
+        for rx, repl in _PROTECTED_WORDS:
             s = rx.sub(repl, s)
     return s

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Cancel superseded runs on the same ref (e.g. force-pushes to a topic branch).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-current:
+    name: Current Python (latest dependencies)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Let GitHub pick the latest stable Python rather than pinning a version,
+      # so CI starts exercising new releases as soon as they ship.
+      - uses: actions/setup-python@v6
+        id: python
+        with:
+          python-version: "3.x"
+
+      # setup-uv only publishes exact version tags (no moving major tag);
+      # Dependabot keeps this pin current.
+      - uses: astral-sh/setup-uv@v8.2.0
+
+      - name: Run tests with coverage
+        # Reuse the interpreter installed above instead of a uv-managed download.
+        env:
+          UV_PYTHON_PREFERENCE: only-system
+        run: make PYTHON=${{ steps.python.outputs.python-version }} RESOLUTION=highest coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: ./coverage.xml
+          # Authenticates the upload. Add the value as a repository secret
+          # (Settings -> Secrets and variables -> Actions); see CONTRIBUTING.md.
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # Don't fail the build if the upload itself fails (e.g. Codecov is
+          # down or the token is missing); coverage is informational here.
+          fail_ci_if_error: false
+
+  test-lowest:
+    name: Oldest Python (lowest dependencies)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # setup-uv only publishes exact version tags (no moving major tag);
+      # Dependabot keeps this pin current.
+      - uses: astral-sh/setup-uv@v8.2.0
+
+      # Python 3.10 is the project's declared minimum (requires-python in
+      # pyproject.toml); pin it deliberately and let uv download it. The
+      # lowest-direct resolution exercises the lowest declared dependency bounds.
+      - name: Run tests
+        run: make PYTHON=3.10 RESOLUTION=lowest-direct test

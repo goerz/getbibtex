@@ -57,31 +57,27 @@ In short,
 7.  Push changes to the topic branch on *your* remote.
 8.  Make a pull request against the base master branch through the Github website of your fork.
 
-The project uses [tox](https://tox.readthedocs.io) for automated testing across multiple versions of Python and for various development tasks such as linting and generating the documentation. See Development Prerequisites for details.
+The project uses [uv](https://docs.astral.sh/uv/) to manage the development environment and to run all development tasks such as testing and linting. See Development Prerequisites for details.
 
-There is also a `Makefile` that wraps around tox, for convenience on Unix-based systems. In your checked-out clone, run
+There is also a `Makefile` that wraps the common uv commands, for convenience. In your checked-out clone, run
 
 ~~~ console
 make help
 ~~~
 
-to see the available make targets. If you cannot use `make`, but want to use `tox` directly (e.g., on Windows), run
+to see the available make targets. Each target runs through `uv run`, which automatically creates and synchronizes the development environment on first use; you can also set it up explicitly with `make develop`.
 
-~~~ console
-tox -av
-~~~
-
-to see a list of tox environments and a description.
+By default, tasks run against Python 3.12. To use a different interpreter, override the `PYTHON` variable, e.g. `make PYTHON=3.10 test`. uv downloads the requested interpreter automatically if it is not already installed.
 
 Development Prerequisites
 -------------------------
 
-Contributing to the package's developments requires that you have Python 3.9 and [tox](https://tox.readthedocs.io) installed. It is strongly recommended that you also have installations of all other supported Python versions. The recommended way to install multiple versions of Python at the same time is through [pyenv](https://github.com/pyenv/pyenv) (or [pyenv-win](https://github.com/pyenv-win/pyenv-win) on Windows).
+Contributing to the package's development requires only that you have [uv](https://docs.astral.sh/uv/) installed; follow the [uv installation instructions](https://docs.astral.sh/uv/getting-started/installation/). uv manages the Python interpreters and all project dependencies for you, so there is no need to install Python or set up virtual environments manually. The project supports Python 3.10 and later.
 
 Branching Model
 ---------------
 
-For developers with direct access to the repository, getbibtex uses a simple branching model where all developments happens directly on the `master` branch. Releases are tags on `master`. All commits on `master` *should* pass all tests and be well-documented. This is so that `git bisect` can be effective. For any non-trivial issue, it is recommended to create a topic branch, instead of working on `master`. There are no restrictions on commits on topic branches, they do not need to contain complete documentation, pass any tests, or even be able to run.
+For developers with direct access to the repository, getbibtex uses a simple branching model where all development happens directly on the `master` branch. All commits on `master` *should* pass all tests and be well-documented. This is so that `git bisect` can be effective. For any non-trivial issue, it is recommended to create a topic branch, instead of working on `master`. There are no restrictions on commits on topic branches, they do not need to contain complete documentation, pass any tests, or even be able to run.
 
 To create a topic-branch named to address issue #1:
 
@@ -99,11 +95,11 @@ git push -u origin 1-title-of-issue
 Commit early and often! You are welcome to rewrite history on topic branches by force-pushing. Before submitting a pull request or merging into `master`, clean up the commit history of the topic branch.
 
 -   Avoid having a series of meaningless granular commits like "start bugfix", "continue development", "add more work on bugfix", "fix typos", and so forth. Instead, use `git commit --amend` to add to your previous commit. This is the ideal way to "commit early and often". You do not have to wait until a commit is "perfect"; it is a good idea to make hourly/daily "snapshots" of work in progress. Amending a commit also allows you to change the commit message of your last commit.
--   You can combine multiple existing commits by "squashing" them. For example, use `git rebase -i HEAD~4` to combined the previous four commits into one. See the ["Rewriting History" section of Pro Git book](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History) for details (if you feel this is too far outside of your git comfort zone, just skip it).
+-   You can combine multiple existing commits by "squashing" them. For example, use `git rebase -i HEAD~4` to combine the previous four commits into one. See the ["Rewriting History" section of Pro Git book](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History) for details (if you feel this is too far outside of your git comfort zone, just skip it).
 -   You can use the `--fixup` flag for `git commit` to add to a previous commit. Fixup commits must be squashed (`git rebase --autosquash`) before merging.
 -   If you work on a topic branch for a long time, and there is significant work on `master` in the meantime, periodically rebase your topic branch on the current master (`git rebase master`). Avoid merging `master` into your topic branch. See [Merging vs. Rebasing](https://www.atlassian.com/git/tutorials/merging-vs-rebasing).
 
-If you are collaborating with others on a topic branch, coordinate with them before rewriting history. 
+If you are collaborating with others on a topic branch, coordinate with them before rewriting history.
 
 When you are done with a topic branch (the issue has been fixed), finish up by merging the topic branch back into `master`:
 
@@ -159,7 +155,7 @@ See [Closing issues using keywords](https://help.github.com/articles/closing-iss
 Testing
 -------
 
-getbibtex includes a full test-suite using [pytest](https://docs.pytest.org/en/latest/). We strive for a [test coverage](https://codecov.io/gh/goerz/getbibtex) above 90%.
+getbibtex includes a full test-suite using [pytest](https://docs.pytest.org/en/latest/). We strive for a [test coverage](https://codecov.io/gh/goerz/getbibtex) above 80%. Run `make coverage` to generate a local report (an HTML report in `./htmlcov` and an XML report in `coverage.xml`).
 
 From a checkout of the `getbibtex` repository you can use
 
@@ -167,15 +163,9 @@ From a checkout of the `getbibtex` repository you can use
 make test
 ~~~
 
-to run the entire test suite, or
+to run the entire test suite against the default Python version. To run the tests against a specific interpreter, use e.g. `make PYTHON=3.10 test`. You can also verify the project against the lowest supported dependency versions with `make test-lowest`.
 
-~~~ console
-tox -e py38-test,py39-test
-~~~
-
-if `make` is not available.
-
-The tests are organized in the `tests` subfolder. It includes python scripts whose name start with `test_`, which contain functions whose names also start with `test_`. Any such functions in any such files are picked up by [pytest](https://docs.pytest.org/en/latest/) for testing. In addition, [doctests](https://docs.python.org/3.7/library/doctest.html) from any docstring or any documentation file (`*.rst`) are picked up (by the [pytest doctest plugin](https://docs.pytest.org/en/latest/doctest.html)).
+The tests are organized in the `tests` subfolder. It includes python scripts whose name start with `test_`, which contain functions whose names also start with `test_`. Any such functions in any such files are picked up by [pytest](https://docs.pytest.org/en/latest/) for testing. In addition, [doctests](https://docs.python.org/3.7/library/doctest.html) from any docstring or any documentation file (`*.rst` or `*.md`, such as this file and the `README.md`) are picked up (by the [pytest doctest plugin](https://docs.pytest.org/en/latest/doctest.html)).
 
 
 Code Style
@@ -183,47 +173,9 @@ Code Style
 
 All code must be compatible with [PEP 8](https://www.python.org/dev/peps/pep-0008/). The line length limit is 79 characters, although exceptions are permissible if this improves readability significantly.
 
-Beyond PEP 8, this project adopts the [Black code style](https://github.com/ambv/black/#the-black-code-style). You can run `make black-check` or `tox -e run-blackcheck` to check adherence to the code style, and `make black` or `tox -e run-black` to apply it.
+Beyond PEP 8, this project adopts the [Black code style](https://github.com/psf/black/#the-black-code-style). You can run `make black-check` to check adherence to the code style, and `make black` to apply it. The version of `black` is pinned in `pyproject.toml` so that formatting stays reproducible across contributors.
 
-Imports within python modules must be sorted according to the [isort](https://github.com/timothycrosley/isort#readme) configuration in `setup.cfg`. The command `make isort-check` or `tox -e run-isortcheck` checks whether all imports are sorted correctly, and `make isort` or `tox -e run-isort` modifies all Python modules in-place with the proper sorting.
+Imports within python modules must be sorted according to the [isort](https://pycqa.github.io/isort/) configuration in `pyproject.toml`. The command `make isort-check` checks whether all imports are sorted correctly, and `make isort` modifies all Python modules in-place with the proper sorting.
 
-The code style is enforced as part of the test suite, as well as through git pre-commit hooks that prevent committing code not does not meet the requirements. These hooks are managed through the [pre-commit framework](https://pre-commit.com).
-You may use `make flake8-check` or `tox -e run-flake8` and `make pylint-check` or `tox -e run-pylint` for additional checks on the code with [flake8](http://flake8.pycqa.org) and [pylint](http://pylint.pycqa.org), but there is no strict requirement for a perfect score with either one of these linters. They only serve as a guideline for code that might be improved.
-
-
-
-Versioning
-----------
-
-Releases should follow [Semantic Versioning](https://semver.org), and version numbers published to [PyPI](http://pypi.org) must be compatible with PEP 440.
-
-In short, versions number follow the pattern `major.minor.patch`, e.g. `0.1.0` for the first release, and `1.0.0` for the first *stable* release. If necessary, pre-release versions might be published as e.g:
-
-~~~ none
-1.0.0-dev1  # developer's preview 1 for release 1.0.0
-1.0.0-rc1   # release candidate 1 for 1.0.0
-~~~
-
-Errors in the release metadata or documentation only may be fixed in a post-release, e.g.:
-
-~~~ none
-1.0.0.post1  # first post-release after 1.0.0
-~~~
-
-Post-releases should be used sparingly, but they are acceptable even though they are not supported by the [Semantic Versioning](https://semver.org) specification.
-
-The current version is available through the `__version__` attribute of the `getbibtex` package
-
-Between releases, `__version__` on the master branch should either be the version number of the last release, with "+dev" appended (as a ["local version identifier"](https://www.python.org/dev/peps/pep-0440/#local-version-identifiers)), or the version number of the next planned release, with "-dev" appended (["pre-release identifier"](https://www.python.org/dev/peps/pep-0440/#pre-releases) with extra dash). The version string "1.0.0-dev1+dev" is a valid value after the "1.0.0-dev1" pre-release. The "+dev" suffix must never be included in a release to [PyPI](http://pypi.org).
-
-Note that [twine](https://twine.readthedocs.io/en/latest/) applies [normalization](https://legacy.python.org/dev/peps/pep-0440/#id29) to the above recommended forms to make them strictly compatible with PEP 440, before uploading to [PyPI](http://pypi.org). Users installing the package through [pip](https://pip.readthedocs.io/en/stable/) may use the original version specification as well as the normalized one (or any other variation that normalizes to the same result).
-
-When making a release via
-
-~~~ shell
-make release
-~~~
-
-the above versioning conventions will be taken into account automatically.
-
-Releases must be tagged in git, using the version string prefixed by "v", e.g. `v1.0.0-dev1` and `v1.0.0`. This makes them available at <https://github.com/goerz/getbibtex/releases>.
+The code style is enforced as part of the test suite, so please check your code before committing.
+You may use `make flake8` and `make pylint` for additional checks on the code with [flake8](https://flake8.pycqa.org) and [pylint](https://pylint.pycqa.org), but there is no strict requirement for a perfect score with either one of these linters. They only serve as a guideline for code that might be improved. Running `make lint` performs all of the above checks together.

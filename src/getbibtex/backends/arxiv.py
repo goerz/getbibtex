@@ -3,7 +3,6 @@ from bibtexparser.customization import splitname
 
 from ..bibtex import bibtex_entry, get_citekey, normalize_name, protect_strings
 
-
 __all__ = ['get_bibtex_from_arxiv_id']
 
 

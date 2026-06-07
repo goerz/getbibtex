@@ -1,0 +1,137 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "getbibtex"
+description = "A script for getting a BibTeX entry from a URL, DOI, or arXiv ID"
+readme = "README.md"
+license = { text = "MIT license" }
+keywords = ["getbibtex"]
+authors = [
+    { name = "Michael Goerz", email = "mail@michaelgoerz.net" },
+]
+requires-python = ">=3.10"
+# Lower bounds are the oldest releases verified to install and import on the
+# minimum supported Python (see `requires-python`); `make test-lowest` exercises
+# them.
+dependencies = [
+    "arxiv2bib>=1.0.8",
+    "bibtexparser>=1.2.0",
+    "click>=8.0",
+    "habanero>=1.0",
+    "unidecode>=1.3.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/goerz/getbibtex"
+
+[project.scripts]
+getbibtex = "getbibtex:main"
+
+# Development dependency groups (PEP 735). Installed by uv with `--all-groups`,
+# `--group NAME`, or `--only-group NAME`; not published with the package.
+# Every tool carries a lower bound so that `make test-lowest` stays usable.
+[dependency-groups]
+# Installed by default (uv treats `dev` as the default group). Everything needed
+# to run the test suite, plus IPython/pdb++ for interactive debugging.
+dev = [
+    "pytest>=7",
+    "pytest-cov>=4",
+    "pytest-xdist>=3",
+    "coverage>=6",
+    "ipython>=8",
+    "pdbpp>=0.11.5",
+    "packaging>=21",
+]
+
+# Linting and formatting. pylint imports the package, so it runs in the same
+# environment as the code rather than in isolation.
+lint = [
+    # Pinned for reproducible formatting; only the formatter is version-locked.
+    "black==26.5.1",
+    "isort>=5",
+    "flake8>=5",
+    "flake8-pyproject>=1",
+    "pylint>=2",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "getbibtex.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 79
+skip-string-normalization = true
+
+# "black" profile keeps isort's output compatible with black; only the
+# project-specific line length and first-party/skip settings are overridden.
+[tool.isort]
+profile = "black"
+line_length = 79
+known_first_party = ["getbibtex"]
+skip = ["src/getbibtex/__init__.py"]
+
+[tool.flake8]
+exclude = ["docs"]
+max-line-length = 79
+extend-ignore = [
+    # See https://github.com/PyCQA/pycodestyle/issues/373
+    "E203",
+    # don't care about "ambiguous variable names"
+    "E741",
+    # when I use lambdas, I know what I'm doing
+    "E731",
+]
+
+# Folded in from the former .pylintrc. Only the project's non-default choices
+# are kept; the rest of that cookiecutter file was pylint's own defaults (or
+# options that no longer exist in current pylint).
+[tool.pylint.main]
+# Match black/flake8/isort, which all use 79.
+max-line-length = 79
+
+[tool.pylint.messages_control]
+disable = [
+    "invalid-name",
+    "unidiomatic-typecheck",
+    "consider-iterating-dictionary",
+    "consider-using-enumerate",
+    "too-many-lines",
+    "multiple-statements",
+    "wrong-spelling-in-comment",
+    "wrong-spelling-in-docstring",
+    "misplaced-format-function",
+    "import-error",
+    "too-many-function-args",
+    "assignment-from-none",
+    "too-many-instance-attributes",
+    "too-few-public-methods",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-branches",
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-statements",
+    "too-many-boolean-expressions",
+    "too-many-nested-blocks",
+    "exec-used",
+    "eval-used",
+    "using-constant-test",
+    "protected-access",
+    "global-statement",
+    "unused-argument",
+    "no-else-return",
+    "ungrouped-imports",
+    "unnecessary-lambda",
+]
+enable = ["c-extension-no-member"]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --doctest-glob=*.rst --doctest-glob=*.md"
+
+[tool.coverage.run]
+relative_files = true

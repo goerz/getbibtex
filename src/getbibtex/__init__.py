@@ -1,4 +1,5 @@
 """Top-level package for getbibtex."""
+
 import pprint
 import re
 import sys
@@ -7,7 +8,6 @@ import click
 
 from .backends.arxiv import get_bibtex_from_arxiv_id
 from .backends.crossref import get_bibtex_from_doi, get_bibtex_from_query
-
 
 __version__ = '0.1.0-dev'
 
@@ -61,7 +61,7 @@ RX_ARXIV_OLD = re.compile(
     is_flag=True,
     help=(
         "Fix records that contain all-uppercase authors or titles. This "
-        "override --auto-protect."
+        "overrides --auto-protect."
     ),
 )
 @click.option(
@@ -72,7 +72,7 @@ RX_ARXIV_OLD = re.compile(
         "are in sentence case, so that any words with capitals "
         "can be assumed to be proper nouns that need to be protected "
         "(enclosed in {}). With --no-auto-protect, the titles are used as "
-        "they are returned by the backend, up ensuring that known proper "
+        "they are returned by the backend, while ensuring that known proper "
         "nouns are protected. "
         "If neither option is given (default),  heuristics are applied "
         "to determine which words need to be protected."
@@ -105,7 +105,7 @@ def main(
 ):
     """Generate a BibTeX entry from the given query.
 
-    Print a a sigle bibtex record to stdout, and any warnings/error messages to
+    Print a single bibtex record to stdout, and any warnings/error messages to
     stderr.
 
     The ARGS are combined into a single query string. This must be a DOI, an

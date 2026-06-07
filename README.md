@@ -2,6 +2,8 @@
 
 [![Source code on Github](https://img.shields.io/badge/goerz-getbibtex-blue.svg?logo=github)][Github]
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/goerz/getbibtex/actions/workflows/ci.yml/badge.svg)](https://github.com/goerz/getbibtex/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/goerz/getbibtex/branch/master/graph/badge.svg)](https://codecov.io/gh/goerz/getbibtex)
 
 A script for getting a BibTeX entry from a URL, DOI, or arXiv ID.
 
@@ -33,7 +35,7 @@ The script is very opinionated:
 
 * Entries are indented with four spaces (no tabs), with every field ending in a comma and the final `}` on a separate line
 
-* There are no non-essential fields in the entry. For examples, articles do not include `month`, `publisher`, `numpages`, a page range, or redundant URLs (all of which are frequently present in publisher-provided bibtex entries). We only keep the feels necessary to render perfectly with [Revtex](https://journals.aps.org/revtex)
+* There are no non-essential fields in the entry. For examples, articles do not include `month`, `publisher`, `numpages`, a page range, or redundant URLs (all of which are frequently present in publisher-provided bibtex entries). We only keep the fields necessary to render perfectly with [Revtex](https://journals.aps.org/revtex)
 
 Since this is a tool for my own personal usage (or for people who want to adopt my citation style), these features are non-negotiable and I will not consider pull requests that change these, or even add customization. If you want different behavior, you should fork this repository. For this reason `getbibtex` will also not be released on the [Python Package Index](https://pypi.org) (and I would appreciate if you didn't register a package with that name, either!).
 
@@ -42,21 +44,26 @@ Pull Requests that extend the macros of known journals, fix bugs, or extend the 
 
 ## Installation
 
-It is recommended that you have [pipx](https://pypa.github.io/pipx/) installed as a prerequisite. Then, to install the latest development version of `getbibtex` from [Github][], run
+It is recommended that you have [uv](https://docs.astral.sh/uv/) installed as a prerequisite. Then, to install the latest development version of `getbibtex` from [Github][], run
 
 ```
-pipx install git+https://github.com/goerz/getbibtex.git
+uv tool install git+https://github.com/goerz/getbibtex.git
 ```
 
-This will make the `getbibtex` executable available on your system. Alternatively, you can also use simply `pip` instead of `pipx` if you want to do your own environment management.
-
-Assuming have installed `getbibtex` via `pipx`, run
+This will make the `getbibtex` executable available on your system. To upgrade to the latest `master` version, run
 
 ```
-pipx reinstall getbibtex
+uv tool upgrade getbibtex
 ```
 
-to upgrade to the latest `master` version.
+Alternatively, if you already have [pipx](https://pypa.github.io/pipx/), you can use it instead of `uv`:
+
+```
+pipx install git+https://github.com/goerz/getbibtex.git   # install
+pipx reinstall getbibtex                                   # upgrade
+```
+
+Or use plain `pip` if you want to do your own environment management.
 
 
 ## Usage
